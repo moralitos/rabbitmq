@@ -1,15 +1,18 @@
 require 'bunny'
 require 'thread'
 require 'securerandom'
+require 'json'
 
 # This class wraps abstracts all the connection code
 # and just exposes a class method called execute that will handle
 # the call to python and get the response
 class RpcClient
   # The execute method is the only method that should be used
-  def self.execute(n)
+  # pass a request hash with the signature
+  # RpcClient.execute(method: 'python_method_name', params: { key: 'value', key2: 'value2' }
+  def self.execute(request = { method: 'the_pyton_method_name', params: { key: 'value', another_key: 'another_value' } })
     client = self.new
-    client.execute(n)
+    client.execute(request.to_json) # convert the hash to json before passing to the instance method execute
   end
 
   # RpcClient Implementation
@@ -61,16 +64,16 @@ class RpcClient
     that = self
     queue.subscribe do |_delivery_info, properties, payload|
       if properties[:correlation_id] == that.call_id
-        that.response = payload.to_i
+        that.response = JSON.parse(payload) # convert the string we receive back to a ruby hash from json
         that.lock.synchronize { that.condition.signal }
       end
     end
   end
 
-  def execute(n)
+  def execute(json_request)
     self.call_id = generate_uuid
 
-    exchange.publish(n.to_s,
+    exchange.publish(json_request,
                      routing_key: server_queue,
                      correlation_id: call_id,
                      reply_to: reply_queue.name)
