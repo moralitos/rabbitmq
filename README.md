@@ -17,10 +17,10 @@ RpcClient.execute(some_number)
 * rabbitmq server
 * python
 * ruby
-    rspec
-    bunny
+* gem rspec
+* gem bunny
 
-## Running:
+## Testing:
 
 * start the rabbit mq server
 ```
