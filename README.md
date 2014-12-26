@@ -8,26 +8,31 @@ and does the same for the python server side.
 
 ## To use this from ruby side:
 
-```
+  ```
 RpcClient.execute(some_number)
-```
+  ```
 
 ## Prerequisites:
 
-* rabbitmq server
-* python
-* ruby
-* gem rspec
-* gem bunny
+  * rabbitmq server
+  * python
+  * ruby
+  * gem rspec
+  * gem bunny
 
 ## Testing:
 
-* start the rabbit mq server
-```
-$ rabbitmq-server
-```
+  * start the rabbit mq server
+  ```
+  $ rabbitmq-server
+  ```
 
-* run the spec
-```
-$ rspec rpc_client_spec.rb
-```
+  * start the python rpc server
+  ```
+  $ python rpc_server.py
+  ```
+
+  * run the spec
+  ```
+  $ rspec rpc_client_spec.rb
+  ```
