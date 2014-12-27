@@ -11,7 +11,7 @@ class RpcClient
   # pass a request hash with the signature
   # RpcClient.execute(method: 'python_method_name', params: { key: 'value', key2: 'value2' }
   def self.execute(request = { method: 'the_pyton_method_name', params: { key: 'value', another_key: 'another_value' } })
-    client = self.new
+    client = RpcClient.new
     client.execute(request.to_json) # convert the hash to json before passing to the instance method execute
   end
 

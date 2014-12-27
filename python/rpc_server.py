@@ -1,52 +1,33 @@
-#!/usr/bin/env python
 import pika
 import json
+import concatenate
 
-class RpcServer:
-  def connection(self):
-    return pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+# This is the method that gets modified as we add more methods
+# match the string and then call your specific functionality
+# the example here, imports the module concatenate, and it users its concat
+# method to provide the ability to concatenate strings
+def dispatch(message):
+    method = message['method'] # the message has been parsed from json by the on_request method
+    params = message['params']
 
-  def channel(self):
-    channel = self.connection().channel()
-    channel.queue_declare(queue='rpc_queue') # this is the matching queue with ruby client
-    return channel
-
-  def concatenate(self, params):
-    if params['strings']:
-      strings = params['strings']
-      concatenated_string = ''
-      for string in strings:
-        concatenated_string += string
-      return { 'status' : 'success', 'params' : { 'answer' : concatenated_string } }
+    if method == 'concatenate':
+        return concatenate.concat(params)
     else:
-      return { 'status' : 'error', 'error' : 'expected to receive a number in the params' }
+        return { status: 'error', error: 'method does not exist' }
 
-  def dispatch(self, message):
-      print message
-      method = message['method'] # the message has been parsed from json by the on_request method
-      params = message['params']
+def on_request(ch, method, props, message_body):
 
-      if method == 'concatenate':
-          return concatenate(params)
-      else:
-          return { 'status' : 'error', 'error' : 'method does not exist' }
+    print " [.] received: "  + message_body
 
-  def on_request(self, ch, method, props, message_body):
+    response = dispatch(json.loads(message_body))
+    json_response = json.dumps(response)
+    print " [.] sending: " + json_response
 
-      print " [.] received: "  + message_body
+    ch.basic_publish(exchange='',
+            routing_key=props.reply_to,
+            body= json_response, # encode it to json before sending back to ruby
+            properties=pika.BasicProperties(correlation_id = props.correlation_id))
 
-      response_body = dispatch(json.loads(message_body))
+    ch.basic_ack(delivery_tag = method.delivery_tag)
 
-      ch.basic_publish(exchange='',
-              routing_key=props.reply_to,
-              body= json.dumps(response_body), # encode it to json before sending back to ruby
-              properties=pika.BasicProperties(correlation_id = props.correlation_id))
-
-      ch.basic_ack(delivery_tag = method.delivery_tag)
-
-  def start(self):
-    self.channel().basic_qos(prefetch_count=1)
-    self.channel().basic_consume(self.on_request, queue='rpc_queue')
-    print "awaiting RPC requests"
-    self.channel().start_consuming()
 

@@ -29,10 +29,12 @@ RpcClient.execute(some_number)
 
   * start the python rpc server
   ```
+  $ cd python
   $ python rpc_server.py
   ```
 
   * run the spec
   ```
+  $ cd ruby
   $ rspec rpc_client_spec.rb
   ```
